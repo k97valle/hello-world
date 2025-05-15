@@ -18,8 +18,8 @@ steps:
     args:
       - 'sonar:sonar' # El plugin y sus configuraciones base se toman del pom.xml
       - '-Dsonar.host.url=https://sonarcloud.io' # Redundante si está en pom.xml, pero no hace daño
-      - '-Dsonar.organization=$_SONAR_ORGANIZATION' # Usa la variable de sustitución
-      - '-Dsonar.projectKey=$_SONAR_PROJECT_KEY'   # Usa la variable de sustitución
+      #- '-Dsonar.organization=$_SONAR_ORGANIZATION' # Usa la variable de sustitución
+      #- '-Dsonar.projectKey=$_SONAR_PROJECT_KEY'   # Usa la variable de sustitución
     env:
       - 'SONAR_TOKEN=${_SONAR_LOGIN_TOKEN}' # Se toma del secreto de GCP
     secretEnv: ['_SONAR_LOGIN_TOKEN']
