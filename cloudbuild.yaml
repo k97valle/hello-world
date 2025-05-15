@@ -17,7 +17,11 @@ steps:
     entrypoint: 'mvn'
     args:
       - '-X'
-      - 'sonar:sonar' # El plugin y sus configuraciones base se toman del pom.xml
+      - 'verify'
+      - 'org.sonarsource.scanner.maven:sonar-maven-plugin:sonar'
+      - '-Dsonar.projectKey=k97valle_hello-world'
+      - '-Dsonar.organization=k97valle'
+      #- 'sonar:sonar' # El plugin y sus configuraciones base se toman del pom.xml
       - '-Dsonar.host.url=https://sonarcloud.io' # Redundante si está en pom.xml, pero no hace daño
       #- '-Dsonar.organization=$_SONAR_ORGANIZATION' # Usa la variable de sustitución
       #- '-Dsonar.projectKey=$_SONAR_PROJECT_KEY'   # Usa la variable de sustitución
