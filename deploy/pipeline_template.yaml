@@ -1,0 +1,15 @@
+## Definiremos el pipeline que se encargará de desplegar la aplicación.
+
+apiVersion: deploy.cloud.google.com/v1 # Versión de la api de deploy
+kind: DeliveryPipeline # Tipo de manifiesto
+metadata: # Metadatos del manifiesto
+  name: ${MODULE} # Nombre del manifiesto
+  # labels: # Etiquetas del manifiesto
+  #   app: demo-1 # Etiqueta de la aplicación
+description: Pipeline para el despliegue de una app de java en cloud run
+serialPipeline:
+  stages: # Los diferentes stages de despliegue que tendrá el pipeline
+    - targetId: ${MODULE} # Id del stage
+      profiles: 
+        - dev # Perfil del stage -> Similar al que declaramos en skaffold.yaml
+ 

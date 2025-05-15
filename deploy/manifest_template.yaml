@@ -1,0 +1,28 @@
+## Manifesto del despliegue. Aquí definiremos las propiedades del cloud run
+
+apiVersion: serving.knative.dev/v1 # Versión de la api de knative
+kind: Service # Tipo de manifiesto
+metadata: # Metadatos del manifiesto
+  name: ${MODULE} # Nombre del servicio de cloud run
+  labels: # Etiquetas del manifiesto
+    app: ${MODULE} # Etiqueta de la aplicación
+  annotations: # Anotaciones del manifiesto
+    run.googleapis.com/description: ${MODULE} # Nombre del cloud run
+spec: # Especificación del cloud run
+  template: # Plantilla del cloud run
+    # Si ponemos metadata nos permitirá añadir instancia sql
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1" # cantidad minima para escalar
+    spec:
+      containers: # Contenedores del cloud run
+        - name: java-hello # Nombre del contenedor
+          image: ${REGISTRY}/${PROJECT}/${REPOSITORY_NAME}/${MODULE}:latest # Imagen del contenedor
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources: # Recursos
+            limit: # limite de memoria
+              cpu: 4000m
+              memory: 2Gi
+ 

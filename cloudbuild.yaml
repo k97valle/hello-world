@@ -1,0 +1,121 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'init'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "POC JAVA APP $_APP1"
+        echo "Instalando dependencias de maven"
+
+  - name: 'maven:3.9.9-amazoncorretto-21-alpine'
+    id: 'Maven install'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo 'Instalando dependencias'
+        mvn package -Dmaven.test.skip=true
+
+  - name: 'maven:3.9.9-amazoncorretto-21-alpine'
+    id: 'SonarQube Analysis'
+    entrypoint: 'mvn'
+    args:
+      - 'sonar:sonar'
+      - '-Dsonar.host.url=$_SONAR_HOST_URL'
+      - '-Dsonar.projectKey=$_SONAR_PROJECT_KEY'
+    env:
+      - 'SONAR_TOKEN=${_SONAR_LOGIN_TOKEN}'
+    secretEnv: ['_SONAR_LOGIN_TOKEN']
+    allowFailure: true
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'create image'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Construyendo imagen de docker"
+        docker build -t $_REGISTRY/$_PROJECT/$_REPOSITORY_NAME/$_MODULE:latest .
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push image'
+    args: ['push', '$_REGISTRY/$_PROJECT/$_REPOSITORY_NAME/$_MODULE:latest']
+
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Substituir template'
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+        apt-get install gettext-base
+
+        export REGISTRY=$_REGISTRY
+        export PROJECT=$_PROJECT
+        export REPOSITORY_NAME=$_REPOSITORY_NAME
+        export MODULE=$_MODULE
+        export PROJECT_ID=$_PROJECT
+
+        envsubst < deploy/manifest_template.yaml > deploy/manifest.yaml
+
+        envsubst < deploy/target_template.yaml > deploy/target.yaml
+
+        envsubst < deploy/pipeline_template.yaml > deploy/pipeline.yaml
+
+        envsubst < deploy/skaffold_template.yaml > deploy/skaffold.yaml
+
+        cat deploy/manifest.yaml
+
+  - name: 'google/cloud-sdk:latest' # Imagen para ejecutar el sdk de google
+    id: Ejecutar Cloud Deploy
+    entrypoint: 'sh'
+    args: 
+    - -xe
+    - -c
+    - |
+      gcloud config set deploy/region $_REGION 
+      gcloud deploy apply --file deploy/pipeline.yaml
+      gcloud deploy apply --file deploy/target.yaml
+      gcloud deploy releases create $_MODULE-$SHORT_SHA --delivery-pipeline=$_MODULE --skaffold-file=deploy/skaffold.yaml
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/SONAR_LOGIN_TOKEN/versions/latest
+    env: '_SONAR_LOGIN_TOKEN'
+timeout: 900s 
+ 
+
+
+   # - name: 'maven:3.9.9-amazoncorretto-21-alpine'
+  #   id: 'Maven version'
+  #   entrypoint: 'bash'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       echo "Version de maven a utilizar:"
+  #       mvn --version
+ # - name: 'gcr.io/cdt-principal/mkdir'
+  #   id: dir
+
+  # Works with current docker file changes
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     - 'run'
+  #     - '--rm'
+  #     - '-w'
+  #     - '/src'
+  #     - '-v'
+  #     - '/workspace:/src'
+  #     - "-e"
+  #     - "_SONAR_TOKEN=$_SONAR_TOKEN"
+  #     - "us-central1-docker.pkg.dev/$PROJECT_ID/devops/sonar:latest"
+  #   id: sonar
+
+  # - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/devops/sonar:latest'
+  #   id: sonar
+  #   env:
+  #     - "SONAR_TOKEN=$_SONAR_TOKEN"
+
+  # - name: 'gcr.io/cdt-principal/ls'
+  #   id: list

@@ -1,0 +1,11 @@
+## Nos permite definir hacia donde el pipeline va a desplegar la aplicación.
+
+apiVersion: deploy.cloud.google.com/v1 # Versión de la api de deploy
+kind: Target # Tipo de manifiesto
+metadata:
+  name: ${MODULE} # Nombre del manifiesto - Coincide con el nombre del stage
+  labels:
+    app: ${MODULE} # Etiqueta de la aplicación
+requireApproval: true # Indica si se debe aprobar la despliegue
+run: # Define que voy a desplegar un cloud run
+  location: projects/${PROJECT_ID}/locations/us-central1 # Ubicación donde se desplegará la aplicación

@@ -1,0 +1,13 @@
+## Este archivo define los diferentes ambientes de despliegue que vamos a utilizar.
+
+apiVersion: skaffold/v4beta7 # Versión de la api de skaffold a utilizar
+kind: Config # Tipo de manifiesto 
+metadata: 
+  name: ${MODULE} # Nombre de la aplicación
+profiles: # Perfiles de despliegue (Listado)
+- name: dev # Nombre del perfil
+  manifests: # Lista de manifiestos para este perfil
+    rawYaml: # Lista de archivos yaml para este perfil
+      - manifest.yaml # Archivo de despliegue de nuestra app
+deploy: # Donde voy a desplegar
+  cloudrun: {}
