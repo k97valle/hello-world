@@ -16,6 +16,7 @@ steps:
     id: 'SonarCloud Analysis'
     entrypoint: 'mvn'
     args:
+      - '-X'
       - 'sonar:sonar' # El plugin y sus configuraciones base se toman del pom.xml
       - '-Dsonar.host.url=https://sonarcloud.io' # Redundante si está en pom.xml, pero no hace daño
       #- '-Dsonar.organization=$_SONAR_ORGANIZATION' # Usa la variable de sustitución
