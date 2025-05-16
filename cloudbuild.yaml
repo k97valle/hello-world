@@ -12,8 +12,8 @@ steps:
     entrypoint: 'sh'
     args:
       - -c
-      - 'echo "SONAR_TOKEN: $SONAR_TOKEN"'
-    secretEnv: ['SONAR_TOKEN']
+      - 'echo "_SONAR_LOGIN_TOKEN: $_SONAR_LOGIN_TOKEN"'
+  secretEnv: ['_SONAR_LOGIN_TOKEN']
 
   # Paso 1: Construir con Maven, generar reporte Jacoco Y CREAR EL DIRECTORIO DE TRABAJO PARA SONAR
   - name: 'maven:3.9.9-amazoncorretto-21-alpine'
