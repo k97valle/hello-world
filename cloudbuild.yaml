@@ -93,9 +93,9 @@ steps:
       gcloud deploy apply --file deploy/target.yaml
       gcloud deploy releases create $_MODULE-$SHORT_SHA --delivery-pipeline=$_MODULE --skaffold-file=deploy/skaffold.yaml
 
-#availableSecrets:
-#  secretManager:
-#  - versionName: projects/$PROJECT_ID/secrets/SONAR_LOGIN_TOKEN/versions/latest
-#    env: '_SONAR_LOGIN_TOKEN'
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/SONAR_LOGIN_TOKEN/versions/latest
+    env: '_SONAR_LOGIN_TOKEN'
 
 timeout: 1200s # Aumentado por si el debug es largo
