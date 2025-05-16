@@ -12,7 +12,12 @@ steps:
     entrypoint: 'sh'
     args:
       - -c
-      - 'echo "_SONAR_LOGIN_TOKEN: $_SONAR_LOGIN_TOKEN"'
+      - |
+        if [ -n "$_SONAR_LOGIN_TOKEN" ]; then
+          echo "_SONAR_LOGIN_TOKEN está seteado. Longitud: ${#_SONAR_LOGIN_TOKEN}"
+        else
+          echo "_SONAR_LOGIN_TOKEN NO está seteado."
+        fi
     secretEnv: ['_SONAR_LOGIN_TOKEN']
 
   # Paso 1: Construir con Maven, generar reporte Jacoco Y CREAR EL DIRECTORIO DE TRABAJO PARA SONAR
