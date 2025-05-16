@@ -51,7 +51,7 @@ steps:
       # Si quisieras pasar propiedades aquí, también usarías -D, ej:
       # - '-Dsonar.projectKey=k97valle_hello-world' # Aunque es mejor en el archivo de propiedades
     env:
-      - 'SONAR_TOKEN=$${SONAR_LOGIN_TOKEN}' # El CLI usa SONAR_TOKEN o sonar.login
+      - 'SONAR_TOKEN=$$SONAR_LOGIN_TOKEN' # El CLI usa SONAR_TOKEN o sonar.login
     secretEnv: ['SONAR_LOGIN_TOKEN']
     allowFailure: true
 
