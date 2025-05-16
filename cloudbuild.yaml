@@ -8,32 +8,109 @@ steps:
         echo "POC JAVA APP $_APP1"
 
   - name: 'maven:3.9.9-amazoncorretto-21-alpine'
-    id: 'Maven Build and Test' # Renombrado para claridad
+    id: 'Maven Package and Test'
     entrypoint: 'mvn'
-    # Es crucial que este paso compile el código y ejecute Jacoco para generar el reporte
-    args: ['clean', 'package'] # 'clean' es bueno para asegurar un build limpio, 'package' compila, prueba y genera cobertura
+    args: ['package'] # Compila, ejecuta tests (activa Jacoco), empaqueta
 
-
-
-  - name: 'sonarsource/sonar-scanner-cli:latest' # Imagen oficial del SonarScanner CLI
-    id: 'SonarCloud Analysis with CLI'
-    entrypoint: 'sonar-scanner'
+  - name: 'maven:3.9.9-amazoncorretto-21-alpine'
+    id: 'SonarCloud Analysis'
+    entrypoint: 'mvn'
     args:
-      - '-X' # Para logs de depuración
-      # El SonarScanner CLI leerá sonar-project.properties por defecto.
-      # El token se pasará como variable de entorno.
-      # Si quisieras pasar propiedades aquí, también usarías -D, ej:
-      # - '-Dsonar.projectKey=k97valle_hello-world' # Aunque es mejor en el archivo de propiedades
+      - '-X'
+      - 'verify'
+      - 'sonar:sonar'
+      #- '-Dsonar.projectKey=k97valle_hello-world'
+      #- '-Dsonar.organization=k97valle'
+      #- 'sonar:sonar' # El plugin y sus configuraciones base se toman del pom.xml
+      #- '-Dsonar.host.url=https://sonarcloud.io' # Redundante si está en pom.xml, pero no hace daño
+      #- '-Dsonar.organization=$_SONAR_ORGANIZATION' # Usa la variable de sustitución
+      #- '-Dsonar.projectKey=$_SONAR_PROJECT_KEY'   # Usa la variable de sustitución
     env:
-      - 'SONAR_TOKEN=${_SONAR_LOGIN_TOKEN}' # El CLI usa SONAR_TOKEN o sonar.login
+      - 'SONAR_TOKEN=${_SONAR_LOGIN_TOKEN}' # Se toma del secreto de GCP
     secretEnv: ['_SONAR_LOGIN_TOKEN']
-    allowFailure: true
+    allowFailure: true # El pipeline continúa incluso si el análisis de SonarCloud falla el Quality Gate
 
-  # ... (resto de los pasos de Docker y Cloud Deploy sin cambios) ...
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'create image'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Construyendo imagen de docker"
+        docker build -t $_REGISTRY/$_PROJECT/$_REPOSITORY_NAME/$_MODULE:latest .
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push image'
+    args: ['push', '$_REGISTRY/$_PROJECT/$_REPOSITORY_NAME/$_MODULE:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Substituir template'
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+        apt-get update && apt-get install -y --no-install-recommends gettext-base && rm -rf /var/lib/apt/lists/*
+        export REGISTRY=$_REGISTRY
+        export PROJECT=$_PROJECT
+        export REPOSITORY_NAME=$_REPOSITORY_NAME
+        export MODULE=$_MODULE
+        export PROJECT_ID=$_PROJECT # Asumiendo que _PROJECT_ID es lo mismo que _PROJECT para los templates
+
+        envsubst < deploy/manifest_template.yaml > deploy/manifest.yaml
+        envsubst < deploy/target_template.yaml > deploy/target.yaml
+        envsubst < deploy/pipeline_template.yaml > deploy/pipeline.yaml
+        envsubst < deploy/skaffold_template.yaml > deploy/skaffold.yaml
+
+        cat deploy/manifest.yaml
+
+  - name: 'google/cloud-sdk:latest'
+    id: Ejecutar Cloud Deploy
+    entrypoint: 'sh'
+    args:
+    - -xe
+    - -c
+    - |
+      gcloud config set deploy/region $_REGION
+      gcloud deploy apply --file deploy/pipeline.yaml
+      gcloud deploy apply --file deploy/target.yaml
+      gcloud deploy releases create $_MODULE-$SHORT_SHA --delivery-pipeline=$_MODULE --skaffold-file=deploy/skaffold.yaml
 
 availableSecrets:
   secretManager:
   - versionName: projects/$PROJECT_ID/secrets/SONAR_LOGIN_TOKEN/versions/latest
     env: '_SONAR_LOGIN_TOKEN'
 
-timeout: 1200s # Aumentado por si el debug es largo
+timeout: 900s
+
+   # - name: 'maven:3.9.9-amazoncorretto-21-alpine'
+  #   id: 'Maven version'
+  #   entrypoint: 'bash'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       echo "Version de maven a utilizar:"
+  #       mvn --version
+ # - name: 'gcr.io/cdt-principal/mkdir'
+  #   id: dir
+
+  # Works with current docker file changes
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     - 'run'
+  #     - '--rm'
+  #     - '-w'
+  #     - '/src'
+  #     - '-v'
+  #     - '/workspace:/src'
+  #     - "-e"
+  #     - "_SONAR_TOKEN=$_SONAR_TOKEN"
+  #     - "us-central1-docker.pkg.dev/$PROJECT_ID/devops/sonar:latest"
+  #   id: sonar
+
+  # - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/devops/sonar:latest'
+  #   id: sonar
+  #   env:
+  #     - "SONAR_TOKEN=$_SONAR_TOKEN"
+
+  # - name: 'gcr.io/cdt-principal/ls'
+  #   id: list
