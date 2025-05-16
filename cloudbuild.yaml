@@ -7,28 +7,15 @@ steps:
       - |
         echo "POC JAVA APP $_APP1"
 
-  - name: 'alpine'
-    id: 'mostrando valor de sonar'
-    entrypoint: 'sh'
-    args:
-      - -c
-      - |
-        echo "Project ID donde se ejecuta el build: $PROJECT_ID"
-        echo "Project Number donde se ejecuta el build: $PROJECT_NUMBER" # Mostrar PROJECT_NUMBER para depuración
-        if [ -n "$$SONAR_LOGIN_TOKEN" ]; then
-          echo "SONAR_LOGIN_TOKEN está seteado. Longitud: $${#SONAR_LOGIN_TOKEN}. Valor: $$SONAR_LOGIN_TOKEN"
-        else
-          echo "SONAR_LOGIN_TOKEN NO está seteado."
-        fi
-    secretEnv: ['SONAR_LOGIN_TOKEN']
 
-  # Paso 1: Construir con Maven, generar reporte Jacoco Y CREAR EL DIRECTORIO DE TRABAJO PARA SONAR
+  # Paso 1: Construir con Maven  para compilar código y generar reporte de Jacoco
   - name: 'maven:3.9.9-amazoncorretto-21-alpine'
     id: 'Maven Build and Test' # Renombrado para claridad
     entrypoint: 'mvn'
     # Es crucial que este paso compile el código y ejecute Jacoco para generar el reporte
     args: ['clean', 'package'] # 'clean' es bueno para asegurar un build limpio, 'package' compila, prueba y genera cobertura
 
+  # Paso 2: Creando directorio de Sonar
   - name: 'gcr.io/cloud-builders/gcloud'
     id: 'Creando directorio de Sonar'
     entrypoint: 'bash'
@@ -39,18 +26,23 @@ steps:
         chmod -R 777 /workspace/target/sonar-cli-work
         echo "Directorio creado"
 
+  # Paso 3: Ejecutando analaisis de Sonar
   - name: 'sonarsource/sonar-scanner-cli:latest' # Imagen oficial del SonarScanner CLI
     id: 'SonarCloud Analysis with CLI'
     entrypoint: 'sonar-scanner'
     args:
       - '-X'
-      #- '-Dsonar.working.directory=/workspace/target/sonar-cli-work'
+      - '-Dsonar.working.directory=/workspace/target/sonar-cli-work'
       # Pasar el token aquí # Para logs de depuración
       # El SonarScanner CLI leerá sonar-project.properties por defecto.
       # El token se pasará como variable de entorno.
       # Si quisieras pasar propiedades aquí, también usarías -D, ej:
       # - '-Dsonar.projectKey=k97valle_hello-world' # Aunque es mejor en el archivo de propiedades
-    #env:
+    env:
+      - 'SONAR_ORGANIZATION=${_SONAR_ORGANIZATION}'
+      - 'SONAR_PROJECT_KEY=${_SONAR_PROJECT_KEY}'
+      - "SONAR_URL=${_SONAR_URL}"
+      - "SONAR_PROJECT_NAME=${_SONAR_PROJECT_NAME}"
       #- 'SONAR_TOKEN=$$SONAR_LOGIN_TOKEN' # El CLI usa SONAR_TOKEN o sonar.login
     secretEnv: ['SONAR_LOGIN_TOKEN']
     allowFailure: true
