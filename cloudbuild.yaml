@@ -24,6 +24,7 @@ steps:
 
   - name: 'sonarsource/sonar-scanner-cli:latest' # Imagen oficial del SonarScanner CLI
     id: 'SonarCloud Analysis with CLI'
+    user: 'root'
     entrypoint: 'sonar-scanner'
     args:
       - '-X'
