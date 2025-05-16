@@ -16,7 +16,7 @@ steps:
         echo "Project ID donde se ejecuta el build: $PROJECT_ID"
         echo "Project Number donde se ejecuta el build: $PROJECT_NUMBER" # Mostrar PROJECT_NUMBER para depuración
         if [ -n "$$SONAR_LOGIN_TOKEN" ]; then
-          echo "SONAR_LOGIN_TOKEN está seteado. Longitud: $${#_SONAR_LOGIN_TOKEN}"
+          echo "SONAR_LOGIN_TOKEN está seteado. Longitud: $${#SONAR_LOGIN_TOKEN}"
         else
           echo "SONAR_LOGIN_TOKEN NO está seteado."
         fi
