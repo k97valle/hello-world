@@ -45,7 +45,7 @@ steps:
     args:
       - '-X'
       - '-Dsonar.working.directory=/workspace/target/sonar-cli-work'
-      - '-Dsonar.login=${SONAR_TOKEN}' # Pasar el token aquí # Para logs de depuración
+      - '-Dsonar.login=$SONAR_TOKEN' # Pasar el token aquí # Para logs de depuración
       # El SonarScanner CLI leerá sonar-project.properties por defecto.
       # El token se pasará como variable de entorno.
       # Si quisieras pasar propiedades aquí, también usarías -D, ej:
