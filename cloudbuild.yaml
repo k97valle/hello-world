@@ -15,12 +15,12 @@ steps:
       - |
         echo "Project ID donde se ejecuta el build: $PROJECT_ID"
         echo "Project Number donde se ejecuta el build: $PROJECT_NUMBER" # Mostrar PROJECT_NUMBER para depuración
-        if [ -n "$_SONAR_LOGIN_TOKEN" ]; then
-          echo "_SONAR_LOGIN_TOKEN está seteado. Longitud: ${#_SONAR_LOGIN_TOKEN}"
+        if [ -n "$$SONAR_LOGIN_TOKEN" ]; then
+          echo "SONAR_LOGIN_TOKEN está seteado. Longitud: $${#_SONAR_LOGIN_TOKEN}"
         else
-          echo "_SONAR_LOGIN_TOKEN NO está seteado."
+          echo "SONAR_LOGIN_TOKEN NO está seteado."
         fi
-    secretEnv: ['_SONAR_LOGIN_TOKEN']
+    secretEnv: ['SONAR_LOGIN_TOKEN']
 
   # Paso 1: Construir con Maven, generar reporte Jacoco Y CREAR EL DIRECTORIO DE TRABAJO PARA SONAR
   - name: 'maven:3.9.9-amazoncorretto-21-alpine'
@@ -103,6 +103,6 @@ steps:
 availableSecrets:
   secretManager:
   - versionName: projects/$PROJECT_NUMBER/secrets/SONAR_LOGIN_TOKEN/versions/latest
-    env: '_SONAR_LOGIN_TOKEN'
+    env: 'SONAR_LOGIN_TOKEN'
 
 timeout: 1200s # Aumentado por si el debug es largo
