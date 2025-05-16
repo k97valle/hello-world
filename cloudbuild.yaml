@@ -7,11 +7,18 @@ steps:
       - |
         echo "POC JAVA APP $_APP1"
 
+  # Paso 1: Construir con Maven, generar reporte Jacoco Y CREAR EL DIRECTORIO DE TRABAJO PARA SONAR
   - name: 'maven:3.9.9-amazoncorretto-21-alpine'
-    id: 'Maven Build and Test' # Renombrado para claridad
-    entrypoint: 'mvn'
-    # Es crucial que este paso compile el código y ejecute Jacoco para generar el reporte
-    args: ['clean', 'package'] # 'clean' es bueno para asegurar un build limpio, 'package' compila, prueba y genera cobertura
+    id: 'Maven Build Create Sonar Workdir and Jacoco Report'
+    entrypoint: 'bash' # Cambiamos a bash para ejecutar múltiples comandos
+    args:
+      - '-c'
+      - |
+        echo "Ejecutando Maven clean package..."
+        mvn clean package # Compila, ejecuta tests, genera Jacoco, empaqueta
+        echo "Creando directorio de trabajo para SonarScanner CLI en target/sonar-cli-work..."
+        mkdir -p target/sonar-cli-work
+        echo "Directorio target/sonar-cli-work creado."
 
 
 
@@ -20,7 +27,7 @@ steps:
     entrypoint: 'sonar-scanner'
     args:
       - '-X'
-      - '-Dsonar.working.directory=target/sonar-cli-work'
+      - '-Dsonar.working.directory=/workspace/target/sonar-cli-work'
       #- '-Dsonar.login=${SONAR_TOKEN}' # Pasar el token aquí # Para logs de depuración
       # El SonarScanner CLI leerá sonar-project.properties por defecto.
       # El token se pasará como variable de entorno.
